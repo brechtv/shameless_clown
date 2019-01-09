@@ -12,9 +12,7 @@
 	<style type="text/css">
 		body {
 			font-family: 'Roboto', sans-serif;
-
 		}
-
 		#query_editor_textarea {
 			width: 100%;
 			min-height: 400px;
@@ -39,7 +37,7 @@
 </head>
 <body>
 <nav class="navbar border-bottom">
-  <a class="navbar-brand" href="/"><h2>#PLX</h2></a>
+  <a class="navbar-brand" href="/"><h2>#SCL</h2></a>
     <div class="form-inline">
     <button  id="query_editor_run_button" class="btn btn-primary my-2 my-sm-0 mr-2" type="submit">Run</button>
     <div class="btn-group">
@@ -119,7 +117,7 @@ WHERE ${is_before_today}
 <script>
     var editor = ace.edit("query_editor_textarea");
 	editor.setTheme("ace/theme/dreamweaver");
-	editor.setOptions({fontSize: "14pt"});
+	editor.setOptions({fontSize: "12pt"});
 	editor.getSession().setMode("ace/mode/sql");
 
 	$("#query_editor_run_button").click(function(){

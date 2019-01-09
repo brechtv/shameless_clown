@@ -1,6 +1,11 @@
 var express = require('express');
 var path = require('path');
 var app = express();
+// Imports the Google Cloud client library
+const {BigQuery} = require('@google-cloud/bigquery');
+
+// Creates a client
+const bigquery = new BigQuery();
 
 const request = require('request');
 
@@ -71,11 +76,17 @@ app.post('/internal/format_query', function(req, res) {
 // main path for running a sql query
 app.post('/internal/run_query', function(req, res) {
 
-	// write the stuff
+	var query = req.body.formatted_query
 
-  var query_results = "ABC THIS IS A RESULT"
-  res.send(query_results)
-  res.end()
+  bigquery.query(query, function(err, rows) {
+    var query_results = err ? err : rows
+    console.log(query_results)
+    res.send(JSON.stringify(query_results))
+    res.end()
+  });
+
+  
+
 })
 
 app.listen(app.get('port'), function() {
