@@ -1,5 +1,6 @@
 body {
 	font-family: 'Roboto', sans-serif;
+	padding-top: 4.5rem;
 }
 
 #query_editor_textarea, #query_includes_textarea {
@@ -17,6 +18,10 @@ body {
 }
 
 .sidebar {
+	background-color: #fff;
+}
+
+.navbar {
 	background-color: #fff;
 }
 
