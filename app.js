@@ -5,7 +5,10 @@ var app = express();
 const {BigQuery} = require('@google-cloud/bigquery');
 
 // Creates a client
-const bigquery = new BigQuery();
+const bigquery = new BigQuery({
+    projectId: 'bv-playground',
+    keyFilename: 'key.json'
+    });
 
 const request = require('request');
 
@@ -32,7 +35,10 @@ app.get('/', function(req, res) {
 app.post('/internal/format_query', function(req, res) {
   // get the sql from the body
   var raw_query = req.body.raw_query
+  console.log(raw_query)
 
+  // the macro replace part
+  try {
   // get all defined macro's in the query
   var defined_macros_arr = raw_query.toLowerCase().match(/define macro[\s\S]+?(?=;)/g)
   // construct the key (macro label) value (macro sql) object
@@ -63,6 +69,7 @@ app.post('/internal/format_query', function(req, res) {
   		// replace the reference with the corresponding sql
   		raw_query = raw_query.replace("$" + el, macro_ref_sql)
 	})
+  } catch(err) {}
 
   // then remove all defined macros from the resulting query
   raw_query = raw_query.replace(/(DEFINE MACRO|define macro)[\s\S]+?;/g, "").trim()

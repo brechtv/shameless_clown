@@ -13,7 +13,7 @@
 		body {
 			font-family: 'Roboto', sans-serif;
 		}
-		#query_editor_textarea {
+		#query_editor_textarea, #query_includes_textarea {
 			width: 100%;
 			min-height: 400px;
 			font-family: 'Roboto Mono', monospace;
@@ -33,11 +33,22 @@
 			border-radius: 5px;
 			padding-left: 5px;
 		}
+
+		/* bootstrap overrides */
+		.nav-pills .nav-link {
+			border-radius: 0;
+		}
+		.nav-pills .nav-link.active {
+			background-color: transparent;
+			color: #0068d8;
+			text-decoration: underline;
+		}
+
 	</style>
 </head>
 <body>
 <nav class="navbar border-bottom">
-  <a class="navbar-brand" href="/"><h2>#SCL</h2></a>
+  <a class="navbar-brand" href="/"><h2>#SQL</h2></a>
     <div class="form-inline">
     <button  id="query_editor_run_button" class="btn btn-primary my-2 my-sm-0 mr-2" type="submit">Run</button>
     <div class="btn-group">
@@ -45,11 +56,11 @@
     Options
   </button>
   <div class="dropdown-menu dropdown-menu-right mt-2">
-    <button class="dropdown-item" type="button">Save query</button>
-    <button class="dropdown-item" type="button">Open Query</button>
-    <button class="dropdown-item" type="button">Query History</button>
+    <button id="query_editor_save_button" class="dropdown-item" type="button">Save query</button>
+    <button id="query_editor_open_button" class="dropdown-item" type="button">Open Query</button>
+    <button id="query_editor_history_button" class="dropdown-item" type="button">Query History</button>
     <div class="dropdown-divider"></div>
-    <button class="dropdown-item" type="button">Settings</button>
+    <button id="query_editor_history_button" class="dropdown-item" type="button">Settings</button>
   </div>
 </div>
   </div>
@@ -57,10 +68,22 @@
 <main role="main" class="container-flex">
   <div class="row">
     <div class="col-2 sidebar">
+    	<div class="mt-2 ml-2">
+    	<h4>Editor</h4>
+    	<div class="card card-body">
+    	    <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+      <a class="nav-link active" id="v-pills-query-editor-tab" data-toggle="pill" href="#v-pills-query-editor" role="tab" aria-controls="v-pills-query-editor" aria-selected="true">Query Editor</a>
+      <a class="nav-link" id="v-pills-includes-tab" data-toggle="pill" href="#v-pills-includes" role="tab" aria-controls="v-pills-includes" aria-selected="false">Macros</a>
+  </div>
+    </div>
+</div>
 
     	<div class="mt-2 ml-2">
-<h4>Reference</h4>
-<p>Define a macro according to the syntax below, and use a <code>${macro_name}</code> reference in your actual query to use the macro.</p>
+<h4  data-toggle="collapse" data-target="#reference-collapsible" aria-expanded="false" aria-controls="reference-collapsible">Reference</h4>
+
+<div class="collapse" id="reference-collapsible">
+  <div class="card card-body">
+   <p>Define a macro according to the syntax below, and use a <code>${macro_name}</code> reference in your actual query to use the macro.</p>
 <h5>Example</h5>
 <div class="example_snippet">
 <code>
@@ -69,26 +92,23 @@
 	SELECT x FROM y WHERE ${your_macro};
 </code>
 </div>
+  </div>
+</div>
+
+
     	</div>
     </div>
     <div class="col-sm-10 pl-0">
-     <div id="query_editor_textarea"/>
-DEFINE MACRO is_before_today:
-    (create_date < NOW());
-    
-DEFINE MACRO pseudo_column_ref:
-    CASE
-      WHEN this_column IS NULL
-        THEN "Unknown"
-      ELSE "Other cool stuff"
-    END;
-    
-SELECT *
-FROM table
-WHERE ${is_before_today}
-  AND ${pseudo_column_ref}
-     
-     </div>
+
+    	<div class="tab-content" id="v-pills-tabContent">
+      <div class="tab-pane show active" id="v-pills-query-editor" role="tabpanel" aria-labelledby="v-pills-query-editor-tab">
+      	<div id="query_editor_textarea"/></div>
+      </div>
+      <div class="tab-pane" id="v-pills-includes" role="tabpanel" aria-labelledby="v-pills-includes-tab">
+      <div id="query_includes_textarea"/></div>
+      </div>
+    </div>
+
 
 <ul class="nav nav-pills justify-content-center mt-2 p-2" id="results_tabs" role="tablist">
   <li class="nav-item">
@@ -99,12 +119,12 @@ WHERE ${is_before_today}
   </li>
 </ul>
 <div class="tab-content" id="myTabContent">
-  <div class="tab-pane fade show active" id="results" role="tabpanel" aria-labelledby="results-tab">
+  <div class="tab-pane show active" id="results" role="tabpanel" aria-labelledby="results-tab">
   	<div id="query_results">
   	<center><span style="color:#898989;">Run a query to get results.</span></center>
   </div>
 </div>
-  <div class="tab-pane fade" id="sql" role="tabpanel" aria-labelledby="sql-tab">
+  <div class="tab-pane" id="sql" role="tabpanel" aria-labelledby="sql-tab">
   	<div id="formatted_query">
   	<center><span style="color:#898989;">Run a query to see the SQL.</span></center>
   </div>
@@ -115,13 +135,41 @@ WHERE ${is_before_today}
 
 
 <script>
-    var editor = ace.edit("query_editor_textarea");
-	editor.setTheme("ace/theme/dreamweaver");
-	editor.setOptions({fontSize: "12pt"});
-	editor.getSession().setMode("ace/mode/sql");
+    var query_editor = ace.edit("query_editor_textarea")
+	query_editor.setTheme("ace/theme/dreamweaver")
+	query_editor.setOptions({fontSize: "12pt"})
+	query_editor.getSession().setMode("ace/mode/sql")
+	var query_editor_from_localstorage = localStorage.getItem('sql_query');
+	query_editor.setValue(query_editor_from_localstorage == undefined || "" ? "" : query_editor_from_localstorage)
+
+
+	query_editor.on("input", function(e) {
+		localStorage.setItem('sql_query', query_editor.getValue())
+	})
+
+	window.onbeforeunload = function(){
+	  localStorage.setItem('sql_query', query_editor.getValue())
+	};
+
+	var includes_editor = ace.edit("query_includes_textarea")
+	includes_editor.setTheme("ace/theme/dreamweaver")
+	includes_editor.setOptions({fontSize: "12pt"})
+	includes_editor.getSession().setMode("ace/mode/sql")
+	var includes_editor_from_localstorage = localStorage.getItem('sql_include');
+	includes_editor.setValue(includes_editor_from_localstorage == undefined || "" ? "" : includes_editor_from_localstorage)
+
+
+	includes_editor.on("input", function(e) {
+		localStorage.setItem('sql_include', includes_editor.getValue())
+	})
+
+	window.onbeforeunload = function(){
+	  localStorage.setItem('sql_include', includes_editor.getValue())
+	};
+
 
 	$("#query_editor_run_button").click(function(){
-		$.post("/internal/format_query", {"raw_query": editor.getValue()}, function( results ) {
+		$.post("/internal/format_query", {"raw_query": includes_editor.getValue() + "\n" + query_editor.getValue()}, function( results ) {
 			$("#formatted_query").html(results.replace(/\n/g, "<br>"))
 			$.post("/internal/run_query", {"formatted_query": results}, function( results ) {
 				$("#query_results").html(results)
