@@ -1,0 +1,39 @@
+body {
+	font-family: 'Roboto', sans-serif;
+}
+
+#query_editor_textarea, #query_includes_textarea {
+	width: 100%;
+	min-height: 400px;
+	font-family: 'Roboto Mono', monospace;
+}
+
+#formatted_query {
+	font-family: 'Roboto Mono', monospace;
+}
+
+#results_tabs {
+	background-color: #f5f5f5;
+}
+
+.sidebar {
+	background-color: #fff;
+}
+
+.example_snippet {
+	font-size: small;
+	background-color: #fff;
+	border-radius: 5px;
+	padding-left: 5px;
+}
+
+/* bootstrap overrides */
+.nav-pills .nav-link {
+	border-radius: 0;
+}
+
+.nav-pills .nav-link.active {
+	background-color: transparent;
+	color: #0068d8;
+	text-decoration: underline;
+}

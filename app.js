@@ -1,14 +1,14 @@
 var express = require('express');
 var path = require('path');
-var app = express();
-// Imports the Google Cloud client library
+var formidable = require('formidable');
+var fs =require('fs-extra');
 const {BigQuery} = require('@google-cloud/bigquery');
 
-// Creates a client
-const bigquery = new BigQuery({
-    projectId: 'bv-playground',
-    keyFilename: 'key.json'
-    });
+var PROJECT_ID;
+
+
+var app = express();
+app.use(express.static(path.join(__dirname, 'public')));
 
 const request = require('request');
 
@@ -26,16 +26,54 @@ app.engine('handlebars', exphbs({
 app.set('view engine', 'handlebars');
 app.set('port', process.env.PORT || 3000);
 
+
+
 // main path, renders the editor
 app.get('/', function(req, res) {
     res.render('editor');
 });
 
+// main path, renders the editor
+app.get('/editor', function(req, res) {
+    res.render('editor');
+});
+
+
+app.get('/upload_key', function(req, res) {
+    res.redirect('back');
+});
+
+app.post('/upload_key', function (req, res) {
+  var form = new formidable.IncomingForm();
+    form.uploadDir = "./";
+    form.keepExtensions = true;
+    form.parse(req, function(err, fields, files) {
+        if(fields.project_name) {
+          PROJECT_ID = fields.project_name;
+        }
+        console.log('project name set to ' + PROJECT_ID)
+        if(files.fileUploaded.size > 0) {
+          fs.rename(files.fileUploaded.path, "key.json", function(err) {
+          if (err)
+              throw err;
+            console.log('file uploaded and rename complete.');  
+          });
+          } else {
+          fs.unlink(files.fileUploaded.path, function (err) {
+              if (err) throw err;
+              console.log('File deleted!');
+          }); 
+          }
+        res.redirect('back');
+    });
+});
+
+
+
 // main path for executing a sql query
 app.post('/internal/format_query', function(req, res) {
   // get the sql from the body
   var raw_query = req.body.raw_query
-  console.log(raw_query)
 
   // the macro replace part
   try {
@@ -82,13 +120,18 @@ app.post('/internal/format_query', function(req, res) {
 
 // main path for running a sql query
 app.post('/internal/run_query', function(req, res) {
+  const bigquery = new BigQuery({
+      projectId: PROJECT_ID,
+      keyFilename: 'key.json'
+    });
 
 	var query = req.body.formatted_query
+  console.log(query)
 
   bigquery.query(query, function(err, rows) {
     var query_results = err ? err : rows
-    console.log(query_results)
     res.send(JSON.stringify(query_results))
+    console.log(JSON.stringify(query_results))
     res.end()
   });
 
