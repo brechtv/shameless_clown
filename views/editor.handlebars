@@ -21,7 +21,10 @@
           Connection
           </button>
           <div class="dropdown-menu dropdown-menu-right mt-2">
+
+            <h4 class="p-2">Connection Settings</h4>
             <form class="p-2" method='post' action='upload_key' enctype="multipart/form-data">
+
               <div class="form-group mb-2">
                 <label for="jsonkeyfile" style="font-weight: bold;">JSON key file</label>
                 <input style="display: block; width: 100%; min-width: 100px;" class="form-control" type='file' name='fileUploaded' id="jsonkeyfile">
@@ -32,9 +35,14 @@
                   <input style="display: block; width: 100%; min-width: 100px;" class="form-control" type='text' name="project_name" id="projectname">
                 </div>
 
-                <input type='submit' class="btn btn-primary">
-              </div>
+                <input type='submit' class="btn btn-primary" value="Save Credentials">
             </form>
+            <div class="dropdown-divider"></div>
+            <div class="p-2">
+              <button class="btn btn-outline-primary" id="test_connection_button">Test Connection</button>
+            </div>
+            
+          </div>
           </div>
         </div>
       </div>

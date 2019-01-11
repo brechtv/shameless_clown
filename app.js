@@ -4,8 +4,6 @@ var formidable = require('formidable');
 var fs =require('fs-extra');
 const {BigQuery} = require('@google-cloud/bigquery');
 
-var PROJECT_ID;
-
 
 var app = express();
 app.use(express.static(path.join(__dirname, 'public')));
@@ -49,9 +47,13 @@ app.post('/upload_key', function (req, res) {
     form.keepExtensions = true;
     form.parse(req, function(err, fields, files) {
         if(fields.project_name) {
-          PROJECT_ID = fields.project_name;
+          var json =  JSON.stringify([{"project": fields.project_name}])
+          fs.writeFile('project.json', json, 'utf8', function(err) {
+          if (err)
+              throw err;
+            console.log('project file created.');  
+          });
         }
-        console.log('project name set to ' + PROJECT_ID)
         if(files.fileUploaded.size > 0) {
           fs.rename(files.fileUploaded.path, "key.json", function(err) {
           if (err)
@@ -120,8 +122,12 @@ app.post('/internal/format_query', function(req, res) {
 
 // main path for running a sql query
 app.post('/internal/run_query', function(req, res) {
+
+  var project = JSON.parse(fs.readFileSync('project.json', 'utf8'))[0].project;
+  console.log(project)
+
   const bigquery = new BigQuery({
-      projectId: PROJECT_ID,
+      projectId: project,
       keyFilename: 'key.json'
     });
 
@@ -134,8 +140,25 @@ app.post('/internal/run_query', function(req, res) {
     console.log(JSON.stringify(query_results))
     res.end()
   });
+})
 
-  
+// main path for running a sql query
+app.post('/internal/test_connection', function(req, res) {
+
+  var project = JSON.parse(fs.readFileSync('project.json', 'utf8'))[0].project;
+
+  const bigquery = new BigQuery({
+      projectId: project,
+      keyFilename: 'key.json'
+    });
+
+  bigquery.getDatasets(function(err, datasets) {
+  if (!err) {
+      var total_datasets = datasets.length > 0 ? "Success! Access to " + datasets.length + " datasets." : "Error! Reset credentials."
+        res.send(total_datasets)
+  }
+  res.end()
+});
 
 })
 
